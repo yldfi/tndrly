@@ -323,7 +323,7 @@ impl DeleteVNetsRequest {
 #[derive(Debug, Clone, Serialize)]
 pub struct ForkVNetRequest {
     /// ID of the source VNet to fork from
-    #[serde(rename = "srcTestnetId")]
+    #[serde(rename = "vnet_id")]
     pub source_vnet_id: String,
 
     /// Slug for the new forked VNet
@@ -363,12 +363,25 @@ impl ForkVNetRequest {
 /// Transaction on a VNet
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VNetTransaction {
-    /// Transaction hash
-    pub hash: String,
-
-    /// Block number
+    /// Unique transaction ID
     #[serde(default)]
-    pub block_number: Option<u64>,
+    pub id: Option<String>,
+
+    /// VNet ID this transaction belongs to
+    #[serde(default)]
+    pub vnet_id: Option<String>,
+
+    /// Transaction hash (may be None for fixture/admin operations)
+    #[serde(default, alias = "hash")]
+    pub tx_hash: Option<String>,
+
+    /// Block number (hex string, e.g., "0x123abc")
+    #[serde(default)]
+    pub block_number: Option<String>,
+
+    /// Block hash
+    #[serde(default)]
+    pub block_hash: Option<String>,
 
     /// From address
     #[serde(default)]
@@ -378,29 +391,137 @@ pub struct VNetTransaction {
     #[serde(default)]
     pub to: Option<String>,
 
-    /// Value
+    /// Value (hex string)
     #[serde(default)]
     pub value: Option<String>,
 
-    /// Gas used
+    /// Gas limit (hex string)
     #[serde(default)]
-    pub gas_used: Option<u64>,
+    pub gas: Option<String>,
 
-    /// Status
+    /// Gas used (hex string)
     #[serde(default)]
-    pub status: Option<bool>,
+    pub gas_used: Option<String>,
 
-    /// Timestamp
+    /// Gas price (hex string)
+    #[serde(default)]
+    pub gas_price: Option<String>,
+
+    /// Transaction status ("success", "failed")
+    #[serde(default)]
+    pub status: Option<String>,
+
+    /// Transaction input data
+    #[serde(default)]
+    pub input: Option<String>,
+
+    /// Transaction nonce (hex string)
+    #[serde(default)]
+    pub nonce: Option<String>,
+
+    /// Transaction index in block (hex string)
+    #[serde(default, alias = "transaction_index")]
+    pub tx_index: Option<String>,
+
+    /// Transaction type (hex string, e.g., "0x0" for legacy, "0x2" for EIP-1559)
+    #[serde(default, rename = "type")]
+    pub tx_type: Option<String>,
+
+    /// Max priority fee per gas (EIP-1559, hex string)
+    #[serde(default)]
+    pub max_priority_fee_per_gas: Option<String>,
+
+    /// Max fee per gas (EIP-1559, hex string)
+    #[serde(default)]
+    pub max_fee_per_gas: Option<String>,
+
+    /// Transaction origin (e.g., "rpc", "internal")
+    #[serde(default)]
+    pub origin: Option<String>,
+
+    /// Transaction kind (e.g., "blockchain", "fixture")
+    #[serde(default)]
+    pub kind: Option<String>,
+
+    /// RPC method used (e.g., "eth_sendRawTransaction")
+    #[serde(default)]
+    pub rpc_method: Option<String>,
+
+    /// State overrides applied
+    #[serde(default)]
+    pub state_overrides: Option<serde_json::Value>,
+
+    /// Block overrides applied
+    #[serde(default)]
+    pub block_overrides: Option<serde_json::Value>,
+
+    /// Transaction category
+    #[serde(default)]
+    pub category: Option<String>,
+
+    /// Function name if decoded
+    #[serde(default)]
+    pub function_name: Option<String>,
+
+    /// Contract address if this was a contract creation
+    #[serde(default)]
+    pub contract_address: Option<String>,
+
+    /// Dashboard URL for viewing transaction details
+    #[serde(default)]
+    pub dashboard_url: Option<String>,
+
+    /// Creation timestamp (ISO 8601)
+    #[serde(default)]
+    pub created_at: Option<String>,
+
+    /// Timestamp (may be block timestamp)
     #[serde(default)]
     pub timestamp: Option<String>,
 }
 
-/// Response when listing VNet transactions
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ListVNetTransactionsResponse {
-    /// List of transactions
-    #[serde(default)]
-    pub transactions: Vec<VNetTransaction>,
+impl VNetTransaction {
+    /// Parse block number from hex string to u64
+    #[must_use]
+    pub fn block_number_as_u64(&self) -> Option<u64> {
+        self.block_number.as_ref().and_then(|s| parse_hex_u64(s))
+    }
+
+    /// Parse gas from hex string to u64
+    #[must_use]
+    pub fn gas_as_u64(&self) -> Option<u64> {
+        self.gas.as_ref().and_then(|s| parse_hex_u64(s))
+    }
+
+    /// Parse gas_used from hex string to u64
+    #[must_use]
+    pub fn gas_used_as_u64(&self) -> Option<u64> {
+        self.gas_used.as_ref().and_then(|s| parse_hex_u64(s))
+    }
+
+    /// Parse nonce from hex string to u64
+    #[must_use]
+    pub fn nonce_as_u64(&self) -> Option<u64> {
+        self.nonce.as_ref().and_then(|s| parse_hex_u64(s))
+    }
+
+    /// Check if transaction succeeded
+    #[must_use]
+    pub fn is_success(&self) -> bool {
+        self.status.as_ref().is_some_and(|s| s == "success")
+    }
+
+    /// Check if transaction failed
+    #[must_use]
+    pub fn is_failed(&self) -> bool {
+        self.status.as_ref().is_some_and(|s| s == "failed")
+    }
+}
+
+/// Parse a hex string (with or without 0x prefix) to u64
+fn parse_hex_u64(s: &str) -> Option<u64> {
+    let s = s.strip_prefix("0x").unwrap_or(s);
+    u64::from_str_radix(s, 16).ok()
 }
 
 /// Query parameters for listing VNet transactions
@@ -410,9 +531,9 @@ pub struct ListVNetTransactionsQuery {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub address: Option<String>,
 
-    /// Filter by status
+    /// Filter by status ("success" or "failed")
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub status: Option<bool>,
+    pub status: Option<String>,
 
     /// Page number
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -436,10 +557,24 @@ impl ListVNetTransactionsQuery {
         self
     }
 
-    /// Filter by status
+    /// Filter by status ("success" or "failed")
     #[must_use]
-    pub fn status(mut self, status: bool) -> Self {
-        self.status = Some(status);
+    pub fn status(mut self, status: impl Into<String>) -> Self {
+        self.status = Some(status.into());
+        self
+    }
+
+    /// Filter for successful transactions
+    #[must_use]
+    pub fn success(mut self) -> Self {
+        self.status = Some("success".to_string());
+        self
+    }
+
+    /// Filter for failed transactions
+    #[must_use]
+    pub fn failed(mut self) -> Self {
+        self.status = Some("failed".to_string());
         self
     }
 
@@ -747,5 +882,158 @@ impl SendVNetTransactionRequest {
     pub fn access_list(mut self, list: Vec<AccessListItem>) -> Self {
         self.access_list = Some(list);
         self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_vnet_transaction_deserialization() {
+        // Example response from Tenderly API (based on issue #12)
+        let json = r#"{
+            "id": "tx-123",
+            "vnet_id": "vnet-456",
+            "tx_hash": "0xabc123def456",
+            "block_number": "0x170abab",
+            "block_hash": "0xblockhash123",
+            "from": "0x1234567890abcdef1234567890abcdef12345678",
+            "to": "0xabcdef1234567890abcdef1234567890abcdef12",
+            "value": "0xde0b6b3a7640000",
+            "gas": "0x5208",
+            "gas_used": "0x5208",
+            "gas_price": "0x3b9aca00",
+            "status": "success",
+            "input": "0x",
+            "nonce": "0x1",
+            "transaction_index": "0x0",
+            "origin": "external",
+            "category": "transfer",
+            "function_name": null,
+            "contract_address": null,
+            "dashboard_url": "https://dashboard.tenderly.co/...",
+            "created_at": "2024-01-15T10:30:00Z",
+            "timestamp": "2024-01-15T10:30:00Z"
+        }"#;
+
+        let tx: VNetTransaction = serde_json::from_str(json).unwrap();
+
+        assert_eq!(tx.id.as_deref(), Some("tx-123"));
+        assert_eq!(tx.vnet_id.as_deref(), Some("vnet-456"));
+        assert_eq!(tx.tx_hash.as_deref(), Some("0xabc123def456"));
+        assert_eq!(tx.block_number.as_deref(), Some("0x170abab"));
+        assert_eq!(tx.status.as_deref(), Some("success"));
+        assert!(tx.is_success());
+        assert!(!tx.is_failed());
+    }
+
+    #[test]
+    fn test_vnet_transaction_failed_status() {
+        let json = r#"{
+            "tx_hash": "0xfailed123",
+            "status": "failed"
+        }"#;
+
+        let tx: VNetTransaction = serde_json::from_str(json).unwrap();
+
+        assert!(tx.is_failed());
+        assert!(!tx.is_success());
+    }
+
+    #[test]
+    fn test_vnet_transaction_hex_parsing() {
+        let json = r#"{
+            "tx_hash": "0xtest",
+            "block_number": "0x170abab",
+            "gas": "0x5208",
+            "gas_used": "0x4e20",
+            "nonce": "0xa"
+        }"#;
+
+        let tx: VNetTransaction = serde_json::from_str(json).unwrap();
+
+        assert_eq!(tx.block_number_as_u64(), Some(24_161_195)); // 0x170abab
+        assert_eq!(tx.gas_as_u64(), Some(21_000));
+        assert_eq!(tx.gas_used_as_u64(), Some(20_000));
+        assert_eq!(tx.nonce_as_u64(), Some(10));
+    }
+
+    #[test]
+    fn test_vnet_transaction_alias_hash() {
+        // Test that both 'hash' and 'tx_hash' are accepted (for backwards compat)
+        let json_with_hash = r#"{"hash": "0x123"}"#;
+        let tx: VNetTransaction = serde_json::from_str(json_with_hash).unwrap();
+        assert_eq!(tx.tx_hash.as_deref(), Some("0x123"));
+
+        let json_with_tx_hash = r#"{"tx_hash": "0x456"}"#;
+        let tx: VNetTransaction = serde_json::from_str(json_with_tx_hash).unwrap();
+        assert_eq!(tx.tx_hash.as_deref(), Some("0x456"));
+    }
+
+    #[test]
+    fn test_vnet_transaction_fixture_without_hash() {
+        // Fixture transactions (admin operations) don't have tx_hash
+        let json = r#"{
+            "id": "fixture-123",
+            "kind": "fixture",
+            "status": "success",
+            "origin": "rpc"
+        }"#;
+
+        let tx: VNetTransaction = serde_json::from_str(json).unwrap();
+        assert!(tx.tx_hash.is_none());
+        assert_eq!(tx.kind.as_deref(), Some("fixture"));
+        assert!(tx.is_success());
+    }
+
+    #[test]
+    fn test_vnet_transactions_array_deserialization() {
+        // API returns a raw array, not a wrapped object
+        let json = r#"[
+            {"tx_hash": "0x111", "status": "success", "kind": "blockchain"},
+            {"tx_hash": "0x222", "status": "failed", "kind": "blockchain"},
+            {"id": "fixture-1", "status": "success", "kind": "fixture"}
+        ]"#;
+
+        let txs: Vec<VNetTransaction> = serde_json::from_str(json).unwrap();
+
+        assert_eq!(txs.len(), 3);
+        assert_eq!(txs[0].tx_hash.as_deref(), Some("0x111"));
+        assert!(txs[0].is_success());
+        assert_eq!(txs[1].tx_hash.as_deref(), Some("0x222"));
+        assert!(txs[1].is_failed());
+        assert!(txs[2].tx_hash.is_none()); // Fixture has no tx_hash
+        assert_eq!(txs[2].kind.as_deref(), Some("fixture"));
+    }
+
+    #[test]
+    fn test_parse_hex_u64() {
+        assert_eq!(parse_hex_u64("0x0"), Some(0));
+        assert_eq!(parse_hex_u64("0x1"), Some(1));
+        assert_eq!(parse_hex_u64("0xa"), Some(10));
+        assert_eq!(parse_hex_u64("0x10"), Some(16));
+        assert_eq!(parse_hex_u64("0x5208"), Some(21_000));
+        assert_eq!(parse_hex_u64("0x170abab"), Some(24_161_195));
+        // Without 0x prefix
+        assert_eq!(parse_hex_u64("5208"), Some(21_000));
+        assert_eq!(parse_hex_u64("170abab"), Some(24_161_195));
+    }
+
+    #[test]
+    fn test_list_vnet_transactions_query_builder() {
+        let query = ListVNetTransactionsQuery::new()
+            .address("0x1234")
+            .success()
+            .page(2)
+            .per_page(50);
+
+        assert_eq!(query.address, Some("0x1234".to_string()));
+        assert_eq!(query.status, Some("success".to_string()));
+        assert_eq!(query.page, Some(2));
+        assert_eq!(query.per_page, Some(50));
+
+        let failed_query = ListVNetTransactionsQuery::new().failed();
+        assert_eq!(failed_query.status, Some("failed".to_string()));
     }
 }

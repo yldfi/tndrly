@@ -1,4 +1,32 @@
 //! Types for Alerts API
+//!
+//! # API Limitations
+//!
+//! The Tenderly Alerts API uses an undocumented request format for creating alerts.
+//! While the types in this module are designed based on available documentation,
+//! the actual API requires an `expressions` array with a specific structure:
+//!
+//! ```json
+//! {
+//!   "name": "Alert Name",
+//!   "description": "optional",
+//!   "enabled": true,
+//!   "expressions": [
+//!     { "type": "method_call", "expression": { ... } },
+//!     { "type": "state_change", "expression": { ... } }
+//!   ],
+//!   "delivery_channels": [...]
+//! }
+//! ```
+//!
+//! Known expression types: `method_call`, `state_change`, `contract_address`, `emitted_log`
+//!
+//! The exact structure of the `expression` object for each type is not publicly documented.
+//! Read operations (list, get, history) work correctly with the current types.
+//!
+//! Similarly, the webhooks API requires a `source_type` field with undocumented valid values.
+//!
+//! See: <https://docs.tenderly.co/alerts/api>
 
 use serde::{Deserialize, Serialize};
 

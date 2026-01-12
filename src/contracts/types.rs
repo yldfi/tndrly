@@ -115,6 +115,24 @@ impl Contract {
         // Tags may be stored at different levels depending on API version
         Vec::new()
     }
+
+    /// Check if this is an actual contract (not a wallet)
+    ///
+    /// The `/contracts` list endpoint returns both contracts and wallets.
+    /// Use this to filter for actual contracts, especially before calling
+    /// `contracts().get()` which only works for contracts.
+    pub fn is_contract(&self) -> bool {
+        self.account_type
+            .as_ref()
+            .is_some_and(|t| t == "contract" || t == "unverified_contract")
+    }
+
+    /// Check if this is a wallet (EOA)
+    ///
+    /// The `/contracts` list endpoint returns both contracts and wallets.
+    pub fn is_wallet(&self) -> bool {
+        self.account_type.as_ref().is_some_and(|t| t == "wallet")
+    }
 }
 
 /// Nested contract details from API

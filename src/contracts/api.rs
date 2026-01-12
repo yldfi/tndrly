@@ -28,7 +28,7 @@ impl<'a> ContractsApi<'a> {
     /// let contract = client.contracts().add(&request).await?;
     /// ```
     pub async fn add(&self, request: &AddContractRequest) -> Result<Contract> {
-        self.client.post("/contract", request).await
+        self.client.post("/address", request).await
     }
 
     /// List contracts in the project

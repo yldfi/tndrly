@@ -94,11 +94,22 @@ impl<'a> VNetsApi<'a> {
     }
 
     /// List transactions on a Virtual TestNet
+    ///
+    /// Returns transactions as a raw array (API returns JSON array directly).
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let txs = client.vnets().transactions("vnet-123", None).await?;
+    /// for tx in txs {
+    ///     println!("Tx: {} - {}", tx.tx_hash, tx.status.unwrap_or_default());
+    /// }
+    /// ```
     pub async fn transactions(
         &self,
         vnet_id: &str,
         query: Option<ListVNetTransactionsQuery>,
-    ) -> Result<ListVNetTransactionsResponse> {
+    ) -> Result<Vec<VNetTransaction>> {
         let path = format!("/vnets/{}/transactions", encode_path_segment(vnet_id));
         match query {
             Some(q) => self.client.get_with_query(&path, &q).await,
