@@ -8,9 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.0](https://github.com/yldfi/tndrly/compare/v0.2.2...v0.3.0) (2026-01-12)
 
 
+### Bug Fixes
+
+* **admin_rpc:** fix `set_erc20_balance` to use unpadded hex format ([#10](https://github.com/yldfi/tndrly/issues/10))
+* **admin_rpc:** fix `get_latest` to return `LatestBlock` struct instead of String ([#10](https://github.com/yldfi/tndrly/issues/10))
+* **admin_rpc:** fix `set_storage_at` to auto-pad slot and value to 32 bytes ([#10](https://github.com/yldfi/tndrly/issues/10))
+* **admin_rpc:** fix `set_next_block_timestamp` to return tx hash String ([#10](https://github.com/yldfi/tndrly/issues/10))
+* **admin_rpc:** fix `set_next_block_timestamp_no_mine` to return tx hash String ([#10](https://github.com/yldfi/tndrly/issues/10))
+* **admin_rpc:** fix `SendTransactionParams.value()` to auto-convert decimal to hex ([#10](https://github.com/yldfi/tndrly/issues/10))
+
+
 ### Features
 
-* **vnets:** add Admin RPC client for Virtual TestNets ([e9af868](https://github.com/yldfi/tndrly/commit/e9af868bde91b807b5803f69841dca28039764a4))
+* **admin_rpc:** add `LatestBlock` type for `get_latest()` response
+* **tests:** add comprehensive Admin RPC integration tests
+
 
 ## [0.2.2](https://github.com/yldfi/tndrly/compare/v0.2.1...v0.2.2) (2026-01-12)
 

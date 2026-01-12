@@ -47,6 +47,8 @@ pub mod admin_rpc;
 mod api;
 mod types;
 
-pub use admin_rpc::{AccessListEntry, AccessListResult, AdminRpc, SendTransactionParams};
+pub use admin_rpc::{
+    AccessListEntry, AccessListResult, AdminRpc, LatestBlock, SendTransactionParams,
+};
 pub use api::VNetsApi;
 pub use types::*;

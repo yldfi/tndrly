@@ -57,6 +57,14 @@ src/
     ├── mod.rs        # Wallets module exports
     ├── api.rs        # Wallets API client
     └── types.rs      # Wallet, AddWalletRequest, etc.
+
+tests/
+└── admin_rpc_integration.rs  # Admin RPC integration tests (requires credentials)
+
+examples/
+├── test_admin_rpc.rs   # Comprehensive Admin RPC test
+├── integration_test.rs # Full API integration test
+└── ...
 ```
 
 ## Key Dependencies
@@ -95,8 +103,15 @@ Install pre-commit hooks to run fmt, clippy, and tests before each commit:
 # Run unit tests
 cargo test
 
+# Run integration tests (requires TENDERLY_* env vars)
+cargo test --test admin_rpc_integration -- --ignored
+
+# Run specific integration test
+cargo test --test admin_rpc_integration test_get_latest_returns_block_object -- --ignored
+
 # Run examples (requires credentials)
 cargo run --example test_connection
+cargo run --example test_admin_rpc
 ```
 
 ## Usage
@@ -120,25 +135,47 @@ let result = client.simulation().simulate(&request).await?;
 The Admin RPC client provides JSON-RPC methods for manipulating VNet state:
 
 ```rust
+use tndrly::vnets::{SendTransactionParams, LatestBlock};
+
 // Get admin RPC client for a VNet
 let admin = client.vnets().admin_rpc("vnet-id").await?;
 
-// Time manipulation
-admin.increase_time(3600).await?;              // Advance 1 hour
-admin.set_next_block_timestamp(1234567890).await?;
+// Time manipulation (all return tx hash)
+admin.increase_time(3600).await?;                      // Advance 1 hour
+let hash = admin.set_next_block_timestamp(1234567890).await?;  // Returns tx hash
+let hash = admin.set_next_block_timestamp_no_mine(ts).await?;  // Returns tx hash
 admin.increase_blocks(100).await?;
 
-// Balance management
-admin.set_balance("0x...", "1000000000000000000").await?;  // 1 ETH
+// Balance management (accepts decimal or hex strings)
+admin.set_balance("0x...", "1000000000000000000").await?;  // 1 ETH (decimal)
+admin.set_balance("0x...", "0xde0b6b3a7640000").await?;    // 1 ETH (hex)
 admin.add_balance("0x...", "1000000000000000000").await?;
 admin.set_erc20_balance("0xtoken", "0xwallet", "1000000").await?;
 
-// Storage manipulation
-admin.set_storage_at("0x...", "0x0", "0x1").await?;
+// Storage manipulation (slot/value auto-padded to 32 bytes)
+admin.set_storage_at("0x...", "0", "1").await?;       // Unpadded OK
+admin.set_storage_at("0x...", "0x5", "0x64").await?;  // Hex OK
 admin.set_code("0x...", "0x6080...").await?;
 
 // Snapshots
 let snapshot_id = admin.snapshot().await?;
 // ... do stuff ...
 admin.revert(&snapshot_id).await?;
+
+// Transaction info
+let latest: LatestBlock = admin.get_latest().await?;  // Returns block object
+println!("Block: {:?}", latest.block_number);
+
+// Send transactions (value auto-converts decimal to hex)
+let tx = SendTransactionParams::new("0xfrom")
+    .to("0xto")
+    .value("1000000000000000000")  // Decimal auto-converted
+    .gas("0x5208");
+let hash = admin.send_transaction(&tx).await?;
 ```
+
+### Admin RPC Types
+
+- `LatestBlock` - Block info from `get_latest()` with `block_number`, `block_hash`, `transaction_hash`
+- `SendTransactionParams` - Builder for transaction parameters
+- `AccessListResult` - Result from `create_access_list()`

@@ -159,14 +159,11 @@ impl AdminRpc {
     ///
     /// # Returns
     ///
-    /// The timestamp that was set
-    pub async fn set_next_block_timestamp(&self, timestamp: u64) -> Result<u64> {
+    /// Transaction hash
+    pub async fn set_next_block_timestamp(&self, timestamp: u64) -> Result<String> {
         let hex_timestamp = format!("0x{:x}", timestamp);
-        let result: String = self
-            .call("evm_setNextBlockTimestamp", [hex_timestamp])
-            .await?;
-        // Response is hex string, parse it
-        parse_hex_u64(&result)
+        self.call("evm_setNextBlockTimestamp", [hex_timestamp])
+            .await
     }
 
     /// Set the timestamp for the next block without creating an empty block
@@ -177,13 +174,11 @@ impl AdminRpc {
     ///
     /// # Returns
     ///
-    /// The timestamp that was set
-    pub async fn set_next_block_timestamp_no_mine(&self, timestamp: u64) -> Result<u64> {
+    /// Transaction hash
+    pub async fn set_next_block_timestamp_no_mine(&self, timestamp: u64) -> Result<String> {
         let hex_timestamp = format!("0x{:x}", timestamp);
-        let result: String = self
-            .call("tenderly_setNextBlockTimestamp", [hex_timestamp])
-            .await?;
-        parse_hex_u64(&result)
+        self.call("tenderly_setNextBlockTimestamp", [hex_timestamp])
+            .await
     }
 
     /// Skip a number of blocks and generate a new block
@@ -285,8 +280,7 @@ impl AdminRpc {
         wallet: &str,
         amount: &str,
     ) -> Result<String> {
-        // Amount must be 32-byte hex value
-        let hex_amount = to_hex_32_bytes(amount);
+        let hex_amount = to_hex_wei(amount);
         self.call(
             "tenderly_setErc20Balance",
             (token_address, wallet, hex_amount),
@@ -320,15 +314,20 @@ impl AdminRpc {
     /// # Arguments
     ///
     /// * `address` - The contract address
-    /// * `slot` - The storage slot (32-byte hex)
-    /// * `value` - The value to set (32-byte hex)
+    /// * `slot` - The storage slot (hex or decimal, will be padded to 32 bytes)
+    /// * `value` - The value to set (hex or decimal, will be padded to 32 bytes)
     ///
     /// # Returns
     ///
     /// Transaction hash
     pub async fn set_storage_at(&self, address: &str, slot: &str, value: &str) -> Result<String> {
-        self.call("tenderly_setStorageAt", (address, slot, value))
-            .await
+        let padded_slot = to_hex_32_bytes(slot);
+        let padded_value = to_hex_32_bytes(value);
+        self.call(
+            "tenderly_setStorageAt",
+            (address, padded_slot, padded_value),
+        )
+        .await
     }
 
     /// Set the bytecode at an address
@@ -377,13 +376,13 @@ impl AdminRpc {
     // Transaction Handling
     // =========================================================================
 
-    /// Get the latest transaction ID on the Virtual TestNet
+    /// Get the latest block/transaction info on the Virtual TestNet
     ///
     /// # Returns
     ///
-    /// UUID of the latest transaction
-    pub async fn get_latest(&self) -> Result<String> {
-        self.call::<[(); 0], String>("evm_getLatest", []).await
+    /// Block information including block number, hash, and transaction hash
+    pub async fn get_latest(&self) -> Result<LatestBlock> {
+        self.call::<[(); 0], LatestBlock>("evm_getLatest", []).await
     }
 
     /// Send an unsigned transaction
@@ -483,10 +482,10 @@ impl SendTransactionParams {
         self
     }
 
-    /// Set the value in wei
+    /// Set the value in wei (accepts hex or decimal, auto-converts to hex)
     #[must_use]
     pub fn value(mut self, value: impl Into<String>) -> Self {
-        self.value = Some(value.into());
+        self.value = Some(to_hex_wei(&value.into()));
         self
     }
 
@@ -521,11 +520,32 @@ pub struct AccessListEntry {
     pub storage_keys: Vec<String>,
 }
 
+/// Latest block/transaction info returned by `evm_getLatest`
+#[derive(Debug, Clone, Deserialize)]
+pub struct LatestBlock {
+    /// Block number (hex)
+    #[serde(rename = "blockNumber")]
+    pub block_number: Option<String>,
+
+    /// Block hash
+    #[serde(rename = "blockHash")]
+    pub block_hash: Option<String>,
+
+    /// Transaction hash (if applicable)
+    #[serde(rename = "transactionHash")]
+    pub transaction_hash: Option<String>,
+
+    /// Additional fields captured as raw JSON
+    #[serde(flatten)]
+    pub extra: std::collections::HashMap<String, serde_json::Value>,
+}
+
 // =========================================================================
 // Helper functions
 // =========================================================================
 
 /// Parse a hex string to u64
+#[allow(dead_code)]
 fn parse_hex_u64(s: &str) -> Result<u64> {
     let s = s.strip_prefix("0x").unwrap_or(s);
     u64::from_str_radix(s, 16)
@@ -658,6 +678,22 @@ mod tests {
         assert_eq!(params.to, Some("0x5678".to_string()));
         assert_eq!(params.gas, Some("0x5208".to_string()));
         assert_eq!(params.value, Some("0x1".to_string()));
+    }
+
+    #[test]
+    fn test_send_transaction_params_value_decimal_conversion() {
+        // Value should auto-convert decimal to hex
+        let params = SendTransactionParams::new("0x1234").value("1000000000000000000"); // 1 ETH in decimal
+
+        assert_eq!(params.value, Some("0xde0b6b3a7640000".to_string()));
+    }
+
+    #[test]
+    fn test_send_transaction_params_value_hex_passthrough() {
+        // Already hex values should pass through unchanged
+        let params = SendTransactionParams::new("0x1234").value("0xde0b6b3a7640000");
+
+        assert_eq!(params.value, Some("0xde0b6b3a7640000".to_string()));
     }
 
     #[test]
@@ -814,6 +850,31 @@ mod tests {
         assert_eq!(result.gas_used, "0x0");
     }
 
+    #[test]
+    fn test_latest_block_deserialization() {
+        let json = r#"{
+            "blockNumber": "0x10",
+            "blockHash": "0xabc123",
+            "transactionHash": "0xdef456",
+            "extraField": "extraValue"
+        }"#;
+        let block: LatestBlock = serde_json::from_str(json).unwrap();
+        assert_eq!(block.block_number, Some("0x10".to_string()));
+        assert_eq!(block.block_hash, Some("0xabc123".to_string()));
+        assert_eq!(block.transaction_hash, Some("0xdef456".to_string()));
+        assert!(block.extra.contains_key("extraField"));
+    }
+
+    #[test]
+    fn test_latest_block_partial_fields() {
+        // API may not always return all fields
+        let json = r#"{"blockNumber": "0x1"}"#;
+        let block: LatestBlock = serde_json::from_str(json).unwrap();
+        assert_eq!(block.block_number, Some("0x1".to_string()));
+        assert!(block.block_hash.is_none());
+        assert!(block.transaction_hash.is_none());
+    }
+
     // =========================================================================
     // Integration-style tests (testing method param construction)
     // =========================================================================
@@ -837,12 +898,10 @@ mod tests {
     #[test]
     fn test_set_erc20_balance_param_format() {
         // 1000 USDC (6 decimals) = 1000000000
+        // set_erc20_balance now uses to_hex_wei (unpadded) format
         let amount = "1000000000";
-        let hex = to_hex_32_bytes(amount);
-        assert_eq!(
-            hex,
-            "0x000000000000000000000000000000000000000000000000000000003b9aca00"
-        );
+        let hex = to_hex_wei(amount);
+        assert_eq!(hex, "0x3b9aca00");
     }
 
     #[test]
