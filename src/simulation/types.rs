@@ -69,6 +69,52 @@ pub struct SimulationRequest {
     /// Block header overrides
     #[serde(skip_serializing_if = "Option::is_none")]
     pub block_header: Option<BlockHeaderOverride>,
+
+    /// Index of the transaction within the block
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub transaction_index: Option<u64>,
+
+    /// Enable precise gas estimation
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub estimate_gas: Option<bool>,
+
+    /// Return access list in response
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub generate_access_list: Option<bool>,
+
+    /// EIP-2930 access list for gas optimization
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub access_list: Option<Vec<AccessListEntry>>,
+
+    // L2/Optimism parameters
+
+    /// Latest L1 block number known to L2
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub l1_block_number: Option<u64>,
+
+    /// Timestamp of the latest L1 block
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub l1_timestamp: Option<u64>,
+
+    /// Address of the sender of the latest L1 to L2 message
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub l1_message_sender: Option<String>,
+
+    /// Indicates if transaction is a deposit from L1 to L2
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub deposit_tx: Option<bool>,
+
+    /// Indicates if transaction is a system-level operation
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub system_tx: Option<bool>,
+
+    /// Amount of token minted within L2
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mint: Option<u64>,
+
+    /// Desired amount to be minted (string for large values)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub amount_to_mint: Option<String>,
 }
 
 // Used by serde(default = "...") attribute; rustc doesn't recognize serde's usage
@@ -99,6 +145,17 @@ impl SimulationRequest {
             simulation_type: "full".to_string(),
             state_objects: None,
             block_header: None,
+            transaction_index: None,
+            estimate_gas: None,
+            generate_access_list: None,
+            access_list: None,
+            l1_block_number: None,
+            l1_timestamp: None,
+            l1_message_sender: None,
+            deposit_tx: None,
+            system_tx: None,
+            mint: None,
+            amount_to_mint: None,
         }
     }
 
@@ -283,6 +340,95 @@ impl SimulationRequest {
         header.timestamp = Some(format!("0x{:x}", timestamp));
         self
     }
+
+    /// Set the transaction index within the block
+    #[must_use]
+    pub fn transaction_index(mut self, index: u64) -> Self {
+        self.transaction_index = Some(index);
+        self
+    }
+
+    /// Enable precise gas estimation
+    #[must_use]
+    pub fn estimate_gas(mut self, enable: bool) -> Self {
+        self.estimate_gas = Some(enable);
+        self
+    }
+
+    /// Generate access list in response
+    #[must_use]
+    pub fn generate_access_list(mut self, enable: bool) -> Self {
+        self.generate_access_list = Some(enable);
+        self
+    }
+
+    /// Set EIP-2930 access list for gas optimization
+    #[must_use]
+    pub fn access_list(mut self, list: Vec<AccessListEntry>) -> Self {
+        self.access_list = Some(list);
+        self.transaction_type = Some(1); // EIP-2930
+        self
+    }
+
+    /// Add an access list entry
+    #[must_use]
+    pub fn add_access_list_entry(mut self, entry: AccessListEntry) -> Self {
+        let list = self.access_list.get_or_insert_with(Vec::new);
+        list.push(entry);
+        self.transaction_type = Some(1); // EIP-2930
+        self
+    }
+
+    // L2/Optimism builder methods
+
+    /// Set L1 block number (for L2 simulations)
+    #[must_use]
+    pub fn l1_block_number(mut self, block: u64) -> Self {
+        self.l1_block_number = Some(block);
+        self
+    }
+
+    /// Set L1 timestamp (for L2 simulations)
+    #[must_use]
+    pub fn l1_timestamp(mut self, timestamp: u64) -> Self {
+        self.l1_timestamp = Some(timestamp);
+        self
+    }
+
+    /// Set L1 message sender (for L2 simulations)
+    #[must_use]
+    pub fn l1_message_sender(mut self, sender: impl Into<String>) -> Self {
+        self.l1_message_sender = Some(sender.into());
+        self
+    }
+
+    /// Mark as deposit transaction from L1 to L2
+    #[must_use]
+    pub fn deposit_tx(mut self, is_deposit: bool) -> Self {
+        self.deposit_tx = Some(is_deposit);
+        self
+    }
+
+    /// Mark as system-level transaction
+    #[must_use]
+    pub fn system_tx(mut self, is_system: bool) -> Self {
+        self.system_tx = Some(is_system);
+        self
+    }
+
+    /// Set mint amount (for L2 simulations)
+    #[must_use]
+    pub fn mint(mut self, amount: u64) -> Self {
+        self.mint = Some(amount);
+        self
+    }
+
+    /// Set amount to mint as string (for large values)
+    #[must_use]
+    pub fn amount_to_mint(mut self, amount: impl Into<String>) -> Self {
+        self.amount_to_mint = Some(amount.into());
+        self
+    }
 }
 
 /// Simulation type
@@ -332,6 +478,42 @@ impl std::str::FromStr for SimulationType {
     }
 }
 
+/// EIP-2930 access list entry
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AccessListEntry {
+    /// Contract address
+    pub address: String,
+
+    /// Storage keys to pre-warm
+    #[serde(default)]
+    pub storage_keys: Vec<String>,
+}
+
+impl AccessListEntry {
+    /// Create a new access list entry
+    #[must_use]
+    pub fn new(address: impl Into<String>) -> Self {
+        Self {
+            address: address.into(),
+            storage_keys: Vec::new(),
+        }
+    }
+
+    /// Add storage keys
+    #[must_use]
+    pub fn storage_keys(mut self, keys: Vec<String>) -> Self {
+        self.storage_keys = keys;
+        self
+    }
+
+    /// Add a single storage key
+    #[must_use]
+    pub fn storage_key(mut self, key: impl Into<String>) -> Self {
+        self.storage_keys.push(key.into());
+        self
+    }
+}
+
 /// State override for an account
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct StateOverride {
@@ -350,6 +532,7 @@ pub struct StateOverride {
 
 /// Block header overrides
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BlockHeaderOverride {
     /// Timestamp override (hex)
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -358,6 +541,74 @@ pub struct BlockHeaderOverride {
     /// Block number override (hex)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub number: Option<String>,
+
+    /// Block hash override
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hash: Option<String>,
+
+    /// State root override
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub state_root: Option<String>,
+
+    /// Parent hash override
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parent_hash: Option<String>,
+
+    /// SHA3 uncles override
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sha3_uncles: Option<String>,
+
+    /// Transactions root override
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub transactions_root: Option<String>,
+
+    /// Receipts root override
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub receipts_root: Option<String>,
+
+    /// Logs bloom override
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub logs_bloom: Option<String>,
+
+    /// Difficulty override
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub difficulty: Option<String>,
+
+    /// Gas limit override
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gas_limit: Option<String>,
+
+    /// Gas used override
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub gas_used: Option<String>,
+
+    /// Base fee per gas override (EIP-1559)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub base_fee_per_gas: Option<String>,
+
+    /// Miner/coinbase address override
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub miner: Option<String>,
+
+    /// Extra data override
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub extra_data: Option<String>,
+
+    /// Mix hash override
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub mix_hash: Option<String>,
+
+    /// Nonce override
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub nonce: Option<String>,
+
+    /// Size override
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub size: Option<String>,
+
+    /// Total difficulty override
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub total_difficulty: Option<String>,
 }
 
 /// Response from a simulation
@@ -373,6 +624,10 @@ pub struct SimulationResponse {
     /// Generated contracts (if any were created)
     #[serde(default)]
     pub contracts: Vec<serde_json::Value>,
+
+    /// Generated access list (when generate_access_list: true was set in request)
+    #[serde(default)]
+    pub generated_access_list: Option<Vec<AccessListEntry>>,
 }
 
 /// Simulation details

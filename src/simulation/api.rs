@@ -145,4 +145,95 @@ mod tests {
         assert!(overrides.contains_key("0xbbbb"));
         assert!(overrides.contains_key("0xcccc"));
     }
+
+    #[test]
+    fn test_simulation_request_gas_estimation() {
+        let request = SimulationRequest::new("0x1234", "0x5678", "0xabcd")
+            .estimate_gas(true)
+            .generate_access_list(true)
+            .transaction_index(5);
+
+        assert_eq!(request.estimate_gas, Some(true));
+        assert_eq!(request.generate_access_list, Some(true));
+        assert_eq!(request.transaction_index, Some(5));
+    }
+
+    #[test]
+    fn test_simulation_request_access_list() {
+        let entry = AccessListEntry::new("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
+            .storage_key("0x0000000000000000000000000000000000000000000000000000000000000001")
+            .storage_key("0x0000000000000000000000000000000000000000000000000000000000000002");
+
+        let request = SimulationRequest::new("0x1234", "0x5678", "0xabcd")
+            .access_list(vec![entry]);
+
+        assert!(request.access_list.is_some());
+        let list = request.access_list.unwrap();
+        assert_eq!(list.len(), 1);
+        assert_eq!(list[0].storage_keys.len(), 2);
+        // Setting access_list should set transaction type to 1 (EIP-2930)
+        assert_eq!(request.transaction_type, Some(1));
+    }
+
+    #[test]
+    fn test_simulation_request_add_access_list_entry() {
+        let entry1 = AccessListEntry::new("0xaaaa");
+        let entry2 = AccessListEntry::new("0xbbbb")
+            .storage_keys(vec!["0x01".to_string(), "0x02".to_string()]);
+
+        let request = SimulationRequest::new("0x1234", "0x5678", "0xabcd")
+            .add_access_list_entry(entry1)
+            .add_access_list_entry(entry2);
+
+        let list = request.access_list.unwrap();
+        assert_eq!(list.len(), 2);
+        assert_eq!(list[0].address, "0xaaaa");
+        assert_eq!(list[1].address, "0xbbbb");
+        assert_eq!(list[1].storage_keys.len(), 2);
+    }
+
+    #[test]
+    fn test_simulation_request_l2_params() {
+        let request = SimulationRequest::new("0x1234", "0x5678", "0xabcd")
+            .network_id("10") // Optimism
+            .l1_block_number(12_345_678)
+            .l1_timestamp(1_700_000_000)
+            .l1_message_sender("0xdeadbeef")
+            .deposit_tx(true)
+            .system_tx(false)
+            .mint(1_000_000)
+            .amount_to_mint("1000000000000000000");
+
+        assert_eq!(request.network_id, "10");
+        assert_eq!(request.l1_block_number, Some(12_345_678));
+        assert_eq!(request.l1_timestamp, Some(1_700_000_000));
+        assert_eq!(request.l1_message_sender, Some("0xdeadbeef".to_string()));
+        assert_eq!(request.deposit_tx, Some(true));
+        assert_eq!(request.system_tx, Some(false));
+        assert_eq!(request.mint, Some(1_000_000));
+        assert_eq!(request.amount_to_mint, Some("1000000000000000000".to_string()));
+    }
+
+    #[test]
+    fn test_access_list_entry_builder() {
+        let entry = AccessListEntry::new("0xcontract")
+            .storage_key("0xslot1")
+            .storage_key("0xslot2");
+
+        assert_eq!(entry.address, "0xcontract");
+        assert_eq!(entry.storage_keys.len(), 2);
+        assert_eq!(entry.storage_keys[0], "0xslot1");
+        assert_eq!(entry.storage_keys[1], "0xslot2");
+    }
+
+    #[test]
+    fn test_simulation_request_serialization() {
+        let request = SimulationRequest::new("0x1234", "0x5678", "0xabcd")
+            .estimate_gas(true)
+            .generate_access_list(true);
+
+        let json = serde_json::to_string(&request).unwrap();
+        assert!(json.contains("\"estimate_gas\":true"));
+        assert!(json.contains("\"generate_access_list\":true"));
+    }
 }
