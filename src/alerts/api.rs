@@ -34,7 +34,7 @@ impl<'a> AlertsApi<'a> {
     /// let alert = client.alerts().create(&request).await?;
     /// ```
     pub async fn create(&self, request: &CreateAlertRequest) -> Result<Alert> {
-        self.client.post("/alerts", request).await
+        self.client.post("/alert", request).await
     }
 
     /// List all alerts
@@ -45,21 +45,21 @@ impl<'a> AlertsApi<'a> {
     /// Get an alert by ID
     pub async fn get(&self, id: &str) -> Result<Alert> {
         self.client
-            .get(&format!("/alerts/{}", encode_path_segment(id)))
+            .get(&format!("/alert/{}", encode_path_segment(id)))
             .await
     }
 
     /// Update an alert (partial update)
     pub async fn update(&self, id: &str, request: &CreateAlertRequest) -> Result<Alert> {
         self.client
-            .patch(&format!("/alerts/{}", encode_path_segment(id)), request)
+            .patch(&format!("/alert/{}", encode_path_segment(id)), request)
             .await
     }
 
     /// Delete an alert
     pub async fn delete(&self, id: &str) -> Result<()> {
         self.client
-            .delete(&format!("/alerts/{}", encode_path_segment(id)))
+            .delete(&format!("/alert/{}", encode_path_segment(id)))
             .await
     }
 
@@ -67,7 +67,7 @@ impl<'a> AlertsApi<'a> {
     pub async fn enable(&self, id: &str) -> Result<Alert> {
         let request = serde_json::json!({ "enabled": true });
         self.client
-            .patch(&format!("/alerts/{}", encode_path_segment(id)), &request)
+            .patch(&format!("/alert/{}", encode_path_segment(id)), &request)
             .await
     }
 
@@ -75,7 +75,7 @@ impl<'a> AlertsApi<'a> {
     pub async fn disable(&self, id: &str) -> Result<Alert> {
         let request = serde_json::json!({ "enabled": false });
         self.client
-            .patch(&format!("/alerts/{}", encode_path_segment(id)), &request)
+            .patch(&format!("/alert/{}", encode_path_segment(id)), &request)
             .await
     }
 
@@ -87,7 +87,7 @@ impl<'a> AlertsApi<'a> {
     ) -> Result<AlertDestination> {
         self.client
             .post(
-                &format!("/alerts/{}/destinations", encode_path_segment(alert_id)),
+                &format!("/alert/{}/destinations", encode_path_segment(alert_id)),
                 request,
             )
             .await
@@ -97,7 +97,7 @@ impl<'a> AlertsApi<'a> {
     pub async fn remove_destination(&self, alert_id: &str, destination_id: &str) -> Result<()> {
         self.client
             .delete(&format!(
-                "/alerts/{}/destinations/{}",
+                "/alert/{}/destinations/{}",
                 encode_path_segment(alert_id),
                 encode_path_segment(destination_id)
             ))

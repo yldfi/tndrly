@@ -38,7 +38,7 @@ impl<'a> ActionsApi<'a> {
     /// let action = client.actions().create(&request).await?;
     /// ```
     pub async fn create(&self, request: &CreateActionRequest) -> Result<Action> {
-        self.client.post("/actions", request).await
+        self.client.post("/actions/publishFile", request).await
     }
 
     /// List all Web3 Actions
@@ -55,21 +55,24 @@ impl<'a> ActionsApi<'a> {
     /// Get an action by ID
     pub async fn get(&self, id: &str) -> Result<Action> {
         self.client
-            .get(&format!("/actions/{}", encode_path_segment(id)))
+            .get(&format!("/actions/action/{}", encode_path_segment(id)))
             .await
     }
 
     /// Update an action
     pub async fn update(&self, id: &str, request: &CreateActionRequest) -> Result<Action> {
         self.client
-            .patch(&format!("/actions/{}", encode_path_segment(id)), request)
+            .patch(
+                &format!("/actions/action/{}", encode_path_segment(id)),
+                request,
+            )
             .await
     }
 
     /// Delete an action
     pub async fn delete(&self, id: &str) -> Result<()> {
         self.client
-            .delete(&format!("/actions/{}", encode_path_segment(id)))
+            .delete(&format!("/actions/action/{}", encode_path_segment(id)))
             .await
     }
 
@@ -77,7 +80,10 @@ impl<'a> ActionsApi<'a> {
     pub async fn enable(&self, id: &str) -> Result<Action> {
         let request = serde_json::json!({ "enabled": true });
         self.client
-            .patch(&format!("/actions/{}", encode_path_segment(id)), &request)
+            .patch(
+                &format!("/actions/action/{}", encode_path_segment(id)),
+                &request,
+            )
             .await
     }
 
@@ -85,7 +91,10 @@ impl<'a> ActionsApi<'a> {
     pub async fn disable(&self, id: &str) -> Result<Action> {
         let request = serde_json::json!({ "enabled": false });
         self.client
-            .patch(&format!("/actions/{}", encode_path_segment(id)), &request)
+            .patch(
+                &format!("/actions/action/{}", encode_path_segment(id)),
+                &request,
+            )
             .await
     }
 
@@ -99,7 +108,7 @@ impl<'a> ActionsApi<'a> {
     ) -> Result<InvokeActionResponse> {
         self.client
             .post(
-                &format!("/actions/{}/invoke", encode_path_segment(id)),
+                &format!("/actions/action/{}/invoke", encode_path_segment(id)),
                 request,
             )
             .await
@@ -108,7 +117,7 @@ impl<'a> ActionsApi<'a> {
     /// Get execution logs for an action
     pub async fn logs(&self, id: &str) -> Result<ListActionLogsResponse> {
         self.client
-            .get(&format!("/actions/{}/logs", encode_path_segment(id)))
+            .get(&format!("/actions/action/{}/logs", encode_path_segment(id)))
             .await
     }
 
@@ -116,7 +125,7 @@ impl<'a> ActionsApi<'a> {
     pub async fn get_log(&self, action_id: &str, log_id: &str) -> Result<ActionLog> {
         self.client
             .get(&format!(
-                "/actions/{}/logs/{}",
+                "/actions/action/{}/logs/{}",
                 encode_path_segment(action_id),
                 encode_path_segment(log_id)
             ))
@@ -131,7 +140,10 @@ impl<'a> ActionsApi<'a> {
         }
         let response: SourceResponse = self
             .client
-            .get(&format!("/actions/{}/source", encode_path_segment(id)))
+            .get(&format!(
+                "/actions/action/{}/source",
+                encode_path_segment(id)
+            ))
             .await?;
         Ok(response.source_code)
     }
@@ -141,7 +153,7 @@ impl<'a> ActionsApi<'a> {
         let request = serde_json::json!({ "source_code": source_code });
         self.client
             .patch(
-                &format!("/actions/{}/source", encode_path_segment(id)),
+                &format!("/actions/action/{}/source", encode_path_segment(id)),
                 &request,
             )
             .await
@@ -157,7 +169,7 @@ impl<'a> ActionsApi<'a> {
     pub async fn stop(&self, id: &str) -> Result<()> {
         self.client
             .post_no_response(
-                &format!("/actions/{}/stop", encode_path_segment(id)),
+                &format!("/actions/action/{}/stop", encode_path_segment(id)),
                 &serde_json::json!({}),
             )
             .await
@@ -173,7 +185,7 @@ impl<'a> ActionsApi<'a> {
     pub async fn resume(&self, id: &str) -> Result<()> {
         self.client
             .post_no_response(
-                &format!("/actions/{}/resume", encode_path_segment(id)),
+                &format!("/actions/action/{}/resume", encode_path_segment(id)),
                 &serde_json::json!({}),
             )
             .await
@@ -238,7 +250,7 @@ impl<'a> ActionsApi<'a> {
         id: &str,
         query: Option<ActionCallsQuery>,
     ) -> Result<ActionCallsResponse> {
-        let path = format!("/actions/{}/calls", encode_path_segment(id));
+        let path = format!("/actions/action/{}/calls", encode_path_segment(id));
         match query {
             Some(q) => self.client.get_with_query(&path, &q).await,
             None => self.client.get(&path).await,
@@ -256,7 +268,7 @@ impl<'a> ActionsApi<'a> {
     pub async fn get_call(&self, action_id: &str, execution_id: &str) -> Result<ActionCall> {
         self.client
             .get(&format!(
-                "/actions/{}/calls/call/{}",
+                "/actions/action/{}/calls/call/{}",
                 encode_path_segment(action_id),
                 encode_path_segment(execution_id)
             ))
