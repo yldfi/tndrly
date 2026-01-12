@@ -233,4 +233,41 @@ mod tests {
         let dest = AddDestinationRequest::slack("https://hooks.slack.com/...");
         assert_eq!(dest.destination_type, DestinationType::Slack);
     }
+
+    #[test]
+    fn test_create_alert_request_serialization() {
+        // Verify JSON structure matches Tenderly API expectations
+        let request = CreateAlertRequest::new(
+            "Test Alert",
+            AlertType::Erc20Transfer,
+            "1",
+            AlertTarget::Address,
+        )
+        .address("0x1234");
+
+        let json = serde_json::to_value(&request).unwrap();
+
+        // Verify field names serialize correctly
+        assert!(json["name"].is_string());
+        assert_eq!(json["alert_type"], "erc20_transfer"); // snake_case
+        assert_eq!(json["network"], "1");
+        assert_eq!(json["target"], "address"); // snake_case
+        assert!(json["addresses"].is_array());
+        assert_eq!(json["enabled"], true);
+    }
+
+    #[test]
+    fn test_alert_history_query_serialization() {
+        // Verify perPage uses correct casing (camelCase for this endpoint)
+        let query = AlertHistoryQuery::new().page(2).per_page(50);
+
+        let json = serde_json::to_value(&query).unwrap();
+
+        assert_eq!(json["page"], 2);
+        assert_eq!(json["perPage"], 50); // Must be camelCase, not per_page
+        assert!(
+            json.get("per_page").is_none(),
+            "per_page should be renamed to perPage"
+        );
+    }
 }

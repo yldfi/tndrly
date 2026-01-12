@@ -275,4 +275,49 @@ mod tests {
         assert!(override_input.storage.is_some());
         assert_eq!(override_input.nonce, Some(10));
     }
+
+    #[test]
+    fn test_add_contract_request_serialization() {
+        // Verify JSON structure matches Tenderly API expectations
+        let request = AddContractRequest::new("1", "0x1234")
+            .display_name("My Contract")
+            .tag("defi");
+
+        let json = serde_json::to_value(&request).unwrap();
+
+        // Verify field names serialize correctly
+        assert_eq!(json["network_id"], "1");
+        assert_eq!(json["address"], "0x1234");
+        assert_eq!(json["display_name"], "My Contract");
+        assert!(json["tags"].is_array());
+        assert_eq!(json["tags"][0], "defi");
+    }
+
+    #[test]
+    fn test_verify_contract_request_serialization() {
+        // Verify JSON structure for contract verification
+        let request = VerifyContractRequest::new(
+            "1",
+            "0x1234",
+            "MyContract",
+            "pragma solidity ^0.8.0;",
+            "v0.8.19+commit.7dd6d404",
+        )
+        .optimization(true, 200)
+        .evm_version("paris");
+
+        let json = serde_json::to_value(&request).unwrap();
+
+        assert_eq!(json["network_id"], "1");
+        assert_eq!(json["address"], "0x1234");
+        assert_eq!(json["contract_name"], "MyContract");
+        assert_eq!(json["compiler_version"], "v0.8.19+commit.7dd6d404");
+
+        // Verify optimization is nested correctly
+        assert!(json["optimization"].is_object());
+        assert_eq!(json["optimization"]["enabled"], true);
+        assert_eq!(json["optimization"]["runs"], 200);
+
+        assert_eq!(json["evm_version"], "paris");
+    }
 }

@@ -118,4 +118,25 @@ mod tests {
             vec!["1".to_string(), "137".to_string()]
         );
     }
+
+    #[test]
+    fn test_add_wallet_request_serialization() {
+        // Verify JSON structure matches Tenderly API expectations
+        let request = AddWalletRequest::new("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045")
+            .display_name("vitalik.eth")
+            .network("1")
+            .network("137");
+
+        let json = serde_json::to_value(&request).unwrap();
+
+        // Verify field names serialize correctly
+        assert_eq!(
+            json["address"],
+            "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
+        );
+        assert_eq!(json["display_name"], "vitalik.eth");
+        assert!(json["network_ids"].is_array());
+        assert_eq!(json["network_ids"][0], "1");
+        assert_eq!(json["network_ids"][1], "137");
+    }
 }

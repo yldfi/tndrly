@@ -307,4 +307,51 @@ mod tests {
         }));
         assert!(request.payload.is_some());
     }
+
+    #[test]
+    fn test_create_action_request_serialization() {
+        // Verify JSON structure matches Tenderly API expectations
+        let request = CreateActionRequest::new(
+            "Test Action",
+            ActionTrigger::Alert,
+            "module.exports = () => {}",
+        )
+        .description("A test action")
+        .trigger_config(TriggerConfig::alert("alert-123"))
+        .secret("API_KEY", "secret123");
+
+        let json = serde_json::to_value(&request).unwrap();
+
+        // Verify field names and enums serialize correctly
+        assert_eq!(json["name"], "Test Action");
+        assert_eq!(json["trigger"], "alert"); // snake_case enum
+        assert_eq!(json["execution"], "sequential"); // snake_case enum
+        assert_eq!(json["source_code"], "module.exports = () => {}");
+        assert_eq!(json["runtime"], "nodejs18");
+        assert_eq!(json["enabled"], true);
+
+        // Verify trigger_config is nested correctly
+        assert!(json["trigger_config"].is_object());
+        assert_eq!(json["trigger_config"]["alert_id"], "alert-123");
+
+        // Verify secrets are serialized correctly
+        assert!(json["secrets"].is_array());
+        assert_eq!(json["secrets"][0]["name"], "API_KEY");
+        assert_eq!(json["secrets"][0]["value"], "secret123"); // Value is exposed in serialization
+    }
+
+    #[test]
+    fn test_action_calls_query_serialization() {
+        // Verify perPage uses correct casing (camelCase for this endpoint)
+        let query = ActionCallsQuery::new().page(1).per_page(25);
+
+        let json = serde_json::to_value(&query).unwrap();
+
+        assert_eq!(json["page"], 1);
+        assert_eq!(json["perPage"], 25); // Must be camelCase
+        assert!(
+            json.get("per_page").is_none(),
+            "per_page should be renamed to perPage"
+        );
+    }
 }
