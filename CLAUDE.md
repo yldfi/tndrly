@@ -39,6 +39,7 @@ src/
 ├── vnets/
 │   ├── mod.rs        # Virtual TestNets module exports
 │   ├── api.rs        # Virtual TestNets API client
+│   ├── admin_rpc.rs  # Admin RPC client (time, balance, storage, snapshots)
 │   └── types.rs      # VNet, CreateVNetRequest, etc.
 ├── alerts/
 │   ├── mod.rs        # Alerts module exports
@@ -112,4 +113,32 @@ let client = Client::new(Config::new("access_key", "account", "project"))?;
 
 // Use APIs
 let result = client.simulation().simulate(&request).await?;
+```
+
+## Admin RPC (Virtual TestNets)
+
+The Admin RPC client provides JSON-RPC methods for manipulating VNet state:
+
+```rust
+// Get admin RPC client for a VNet
+let admin = client.vnets().admin_rpc("vnet-id").await?;
+
+// Time manipulation
+admin.increase_time(3600).await?;              // Advance 1 hour
+admin.set_next_block_timestamp(1234567890).await?;
+admin.increase_blocks(100).await?;
+
+// Balance management
+admin.set_balance("0x...", "1000000000000000000").await?;  // 1 ETH
+admin.add_balance("0x...", "1000000000000000000").await?;
+admin.set_erc20_balance("0xtoken", "0xwallet", "1000000").await?;
+
+// Storage manipulation
+admin.set_storage_at("0x...", "0x0", "0x1").await?;
+admin.set_code("0x...", "0x6080...").await?;
+
+// Snapshots
+let snapshot_id = admin.snapshot().await?;
+// ... do stuff ...
+admin.revert(&snapshot_id).await?;
 ```

@@ -1,5 +1,6 @@
 //! Virtual TestNets API operations
 
+use super::admin_rpc::AdminRpc;
 use super::types::*;
 use crate::client::{encode_path_segment, Client};
 use crate::error::Result;
@@ -129,6 +130,59 @@ impl<'a> VNetsApi<'a> {
         let vnet = self.get(vnet_id).await?;
         vnet.rpcs
             .ok_or_else(|| crate::error::Error::not_found("RPC URLs not available for this VNet"))
+    }
+
+    /// Get an Admin RPC client for a Virtual TestNet
+    ///
+    /// The Admin RPC client provides methods for manipulating the VNet state,
+    /// including time warping, balance setting, storage manipulation, and snapshots.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let admin = client.vnets().admin_rpc("vnet-123").await?;
+    ///
+    /// // Set balance for an address
+    /// admin.set_balance("0x1234...", "1000000000000000000").await?;
+    ///
+    /// // Advance time by 1 hour
+    /// admin.increase_time(3600).await?;
+    ///
+    /// // Create a snapshot
+    /// let snapshot_id = admin.snapshot().await?;
+    ///
+    /// // Do some operations...
+    ///
+    /// // Revert to snapshot
+    /// admin.revert(&snapshot_id).await?;
+    /// ```
+    pub async fn admin_rpc(&self, vnet_id: &str) -> Result<AdminRpc> {
+        let rpcs = self.rpc_urls(vnet_id).await?;
+        let admin_url = rpcs.admin().ok_or_else(|| {
+            crate::error::Error::not_found("Admin RPC URL not available for this VNet")
+        })?;
+        AdminRpc::new(admin_url)
+    }
+
+    /// Get an Admin RPC client from an existing VNet object
+    ///
+    /// Use this when you already have the VNet object to avoid an extra API call.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let vnet = client.vnets().create(&request).await?;
+    /// let admin = client.vnets().admin_rpc_from_vnet(&vnet)?;
+    /// admin.set_balance("0x1234...", "1000000000000000000").await?;
+    /// ```
+    pub fn admin_rpc_from_vnet(&self, vnet: &VNet) -> Result<AdminRpc> {
+        let rpcs = vnet.rpcs.as_ref().ok_or_else(|| {
+            crate::error::Error::not_found("RPC URLs not available for this VNet")
+        })?;
+        let admin_url = rpcs.admin().ok_or_else(|| {
+            crate::error::Error::not_found("Admin RPC URL not available for this VNet")
+        })?;
+        AdminRpc::new(admin_url)
     }
 
     /// Update a Virtual TestNet

@@ -10,6 +10,7 @@
 //! - State sync with parent network
 //! - Fork VNets from other VNets
 //! - CI/CD integration with bulk operations
+//! - Admin RPC for state manipulation (time warping, balance setting, snapshots)
 //!
 //! # Example
 //!
@@ -28,6 +29,11 @@
 //! println!("VNet ID: {}", vnet.id);
 //! println!("Public RPC: {:?}", vnet.rpcs.as_ref().and_then(|r| r.public()));
 //!
+//! // Use Admin RPC to manipulate state
+//! let admin = client.vnets().admin_rpc("vnet-id").await?;
+//! admin.set_balance("0x1234...", "1000000000000000000").await?;
+//! admin.increase_time(3600).await?; // Advance 1 hour
+//!
 //! // List VNets matching a PR number (useful for CI)
 //! let query = ListVNetsQuery::new().slug("pr-123");
 //! let vnets = client.vnets().list(Some(query)).await?;
@@ -37,8 +43,10 @@
 //! client.vnets().delete_many(old_ids).await?;
 //! ```
 
+pub mod admin_rpc;
 mod api;
 mod types;
 
+pub use admin_rpc::{AccessListEntry, AccessListResult, AdminRpc, SendTransactionParams};
 pub use api::VNetsApi;
 pub use types::*;
