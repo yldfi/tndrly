@@ -109,12 +109,7 @@ impl<'a> ContractsApi<'a> {
     /// operations, their changes may be overwritten (TOCTOU race condition).
     /// For concurrent access, consider using the direct `update()` method with
     /// your own synchronization.
-    pub async fn add_tag(
-        &self,
-        network_id: &str,
-        address: &str,
-        tag: &str,
-    ) -> Result<Contract> {
+    pub async fn add_tag(&self, network_id: &str, address: &str, tag: &str) -> Result<Contract> {
         let contract = self.get(network_id, address).await?;
         let mut tags = contract.tags();
         if !tags.contains(&tag.to_string()) {
@@ -129,12 +124,7 @@ impl<'a> ContractsApi<'a> {
     /// # Note
     ///
     /// This operation is not atomic. See [`add_tag`](Self::add_tag) for details.
-    pub async fn remove_tag(
-        &self,
-        network_id: &str,
-        address: &str,
-        tag: &str,
-    ) -> Result<Contract> {
+    pub async fn remove_tag(&self, network_id: &str, address: &str, tag: &str) -> Result<Contract> {
         let contract = self.get(network_id, address).await?;
         let tags: Vec<String> = contract.tags().into_iter().filter(|t| t != tag).collect();
         let request = UpdateContractRequest::new().tags(tags);

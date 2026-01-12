@@ -687,7 +687,11 @@ impl SendVNetTransactionRequest {
     }
 
     /// Create a simple ETH transfer
-    pub fn transfer(from: impl Into<String>, to: impl Into<String>, value: impl Into<String>) -> Self {
+    pub fn transfer(
+        from: impl Into<String>,
+        to: impl Into<String>,
+        value: impl Into<String>,
+    ) -> Self {
         Self {
             from: from.into(),
             to: to.into(),

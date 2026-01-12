@@ -77,9 +77,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Ok(wallets) => {
             println!("  ✅ list() - {} wallets", wallets.len());
             for w in wallets.iter().take(3) {
-                println!("      - {} on network {}",
+                println!(
+                    "      - {} on network {}",
                     w.address().unwrap_or("unknown"),
-                    w.network_id().unwrap_or("unknown"));
+                    w.network_id().unwrap_or("unknown")
+                );
             }
             passed += 1;
         }
@@ -97,12 +99,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     match client.wallets().add(&add_request).await {
         Ok(resp) => {
-            println!("  ✅ add() - added wallet, {} contracts", resp.contracts.len());
+            println!(
+                "  ✅ add() - added wallet, {} contracts",
+                resp.contracts.len()
+            );
             passed += 1;
         }
         Err(e) => {
             let err_str = e.to_string();
-            if err_str.contains("quota") || err_str.contains("limit") || err_str.contains("already") || err_str.contains("conflict") {
+            if err_str.contains("quota")
+                || err_str.contains("limit")
+                || err_str.contains("already")
+                || err_str.contains("conflict")
+            {
                 println!("  ✅ add() - endpoint works (wallet exists or quota limit)");
                 passed += 1;
             } else {
@@ -113,7 +122,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // get() - test with public address (will 404 if not in project, which is expected)
-    match client.wallets().get("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045", "1").await {
+    match client
+        .wallets()
+        .get("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045", "1")
+        .await
+    {
         Ok(wallet) => {
             println!(
                 "  ✅ get() - {} (balance: {})",
@@ -139,7 +152,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // list_project()
     match client.delivery_channels().list_project().await {
         Ok(resp) => {
-            println!("  ✅ list_project() - {} channels", resp.delivery_channels.len());
+            println!(
+                "  ✅ list_project() - {} channels",
+                resp.delivery_channels.len()
+            );
             passed += 1;
         }
         Err(e) => {
@@ -151,7 +167,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // list_account()
     match client.delivery_channels().list_account().await {
         Ok(resp) => {
-            println!("  ✅ list_account() - {} channels", resp.delivery_channels.len());
+            println!(
+                "  ✅ list_account() - {} channels",
+                resp.delivery_channels.len()
+            );
             passed += 1;
         }
         Err(e) => {
@@ -226,9 +245,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // simulate() - simple ETH transfer
     use tndrly::simulation::SimulationRequest;
     let sim_request = SimulationRequest::new(
-        "0xd8da6bf26964af9d7eed9e03e53415d37aa96045",  // from: vitalik.eth
-        "0x0000000000000000000000000000000000000000",  // to: zero address
-        "",  // input: empty calldata
+        "0xd8da6bf26964af9d7eed9e03e53415d37aa96045", // from: vitalik.eth
+        "0x0000000000000000000000000000000000000000", // to: zero address
+        "",                                           // input: empty calldata
     )
     .network_id("1")
     .value("0");

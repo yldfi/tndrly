@@ -164,10 +164,7 @@ impl<'a> AlertsApi<'a> {
     /// let query = AlertHistoryQuery::new().page(2).per_page(50);
     /// let history = client.alerts().history(Some(query)).await?;
     /// ```
-    pub async fn history(
-        &self,
-        query: Option<AlertHistoryQuery>,
-    ) -> Result<AlertHistoryResponse> {
+    pub async fn history(&self, query: Option<AlertHistoryQuery>) -> Result<AlertHistoryResponse> {
         match query {
             Some(q) => self.client.get_with_query("/alert-history", &q).await,
             None => self.client.get("/alert-history").await,

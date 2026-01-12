@@ -193,8 +193,12 @@ impl<'a> ActionsApi<'a> {
     /// client.actions().stop_many(vec![]).await?;
     /// ```
     pub async fn stop_many(&self, action_ids: Vec<String>) -> Result<()> {
-        let request = StopResumeActionsRequest { actions: action_ids };
-        self.client.post_no_response("/actions/stop", &request).await
+        let request = StopResumeActionsRequest {
+            actions: action_ids,
+        };
+        self.client
+            .post_no_response("/actions/stop", &request)
+            .await
     }
 
     /// Resume multiple stopped Web3 Actions
@@ -211,7 +215,9 @@ impl<'a> ActionsApi<'a> {
     /// client.actions().resume_many(vec![]).await?;
     /// ```
     pub async fn resume_many(&self, action_ids: Vec<String>) -> Result<()> {
-        let request = StopResumeActionsRequest { actions: action_ids };
+        let request = StopResumeActionsRequest {
+            actions: action_ids,
+        };
         self.client
             .post_no_response("/actions/resume", &request)
             .await

@@ -372,11 +372,7 @@ impl Client {
     }
 
     /// Make a PATCH request without expecting a response body
-    pub async fn patch_no_response<B: serde::Serialize>(
-        &self,
-        path: &str,
-        body: &B,
-    ) -> Result<()> {
+    pub async fn patch_no_response<B: serde::Serialize>(&self, path: &str, body: &B) -> Result<()> {
         let url = self.url(path);
         let response = self
             .http

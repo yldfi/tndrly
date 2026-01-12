@@ -12,11 +12,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("## Contracts API");
 
     // get() - get a specific contract
-    match client.contracts().get("1", "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48").await {
+    match client
+        .contracts()
+        .get("1", "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48")
+        .await
+    {
         Ok(contract) => {
-            println!("  ✅ get() - {} ({})",
+            println!(
+                "  ✅ get() - {} ({})",
                 contract.contract_name().unwrap_or("unknown"),
-                contract.address().unwrap_or("unknown"));
+                contract.address().unwrap_or("unknown")
+            );
         }
         Err(e) => println!("  ❌ get() - {}", e),
     }

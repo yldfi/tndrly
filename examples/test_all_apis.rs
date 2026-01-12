@@ -42,7 +42,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\nTesting Delivery Channels API...");
     match client.delivery_channels().list_project().await {
         Ok(response) => {
-            println!("Found {} delivery channels", response.delivery_channels.len());
+            println!(
+                "Found {} delivery channels",
+                response.delivery_channels.len()
+            );
         }
         Err(e) => println!("Error: {}", e),
     }

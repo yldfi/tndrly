@@ -98,12 +98,16 @@ impl Contract {
 
     /// Get the contract name (from verification)
     pub fn contract_name(&self) -> Option<&str> {
-        self.contract.as_ref().and_then(|c| c.contract_name.as_deref())
+        self.contract
+            .as_ref()
+            .and_then(|c| c.contract_name.as_deref())
     }
 
     /// Check if the contract is verified
     pub fn is_verified(&self) -> bool {
-        self.contract.as_ref().map_or(false, |c| c.verification_date.is_some())
+        self.contract
+            .as_ref()
+            .is_some_and(|c| c.verification_date.is_some())
     }
 
     /// Get tags from contract details

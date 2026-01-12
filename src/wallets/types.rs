@@ -115,7 +115,9 @@ impl WalletOnNetwork {
 
     /// Check if this is a wallet (not a contract)
     pub fn is_wallet(&self) -> bool {
-        self.account.as_ref().map_or(false, |a| a.account_type.as_deref() == Some("wallet"))
+        self.account
+            .as_ref()
+            .is_some_and(|a| a.account_type.as_deref() == Some("wallet"))
     }
 }
 
