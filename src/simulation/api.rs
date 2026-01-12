@@ -76,10 +76,7 @@ impl<'a> SimulationApi<'a> {
     pub async fn get_full(&self, id: &str) -> Result<SimulationResponse> {
         let empty: serde_json::Value = serde_json::json!({});
         self.client
-            .post(
-                &format!("/simulations/{}", encode_path_segment(id)),
-                &empty,
-            )
+            .post(&format!("/simulations/{}", encode_path_segment(id)), &empty)
             .await
     }
 
@@ -188,8 +185,7 @@ mod tests {
             .storage_key("0x0000000000000000000000000000000000000000000000000000000000000001")
             .storage_key("0x0000000000000000000000000000000000000000000000000000000000000002");
 
-        let request = SimulationRequest::new("0x1234", "0x5678", "0xabcd")
-            .access_list(vec![entry]);
+        let request = SimulationRequest::new("0x1234", "0x5678", "0xabcd").access_list(vec![entry]);
 
         assert!(request.access_list.is_some());
         let list = request.access_list.unwrap();
@@ -235,7 +231,10 @@ mod tests {
         assert_eq!(request.deposit_tx, Some(true));
         assert_eq!(request.system_tx, Some(false));
         assert_eq!(request.mint, Some(1_000_000));
-        assert_eq!(request.amount_to_mint, Some("1000000000000000000".to_string()));
+        assert_eq!(
+            request.amount_to_mint,
+            Some("1000000000000000000".to_string())
+        );
     }
 
     #[test]

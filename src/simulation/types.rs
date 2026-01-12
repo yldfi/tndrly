@@ -87,7 +87,6 @@ pub struct SimulationRequest {
     pub access_list: Option<Vec<AccessListEntry>>,
 
     // L2/Optimism parameters
-
     /// Latest L1 block number known to L2
     #[serde(skip_serializing_if = "Option::is_none")]
     pub l1_block_number: Option<u64>,
