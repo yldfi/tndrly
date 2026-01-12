@@ -37,7 +37,9 @@ impl CreateVNetRequest {
                 block_number: None,
             },
             virtual_network_config: VirtualNetworkConfig {
-                chain_id: network_id,
+                chain_config: ChainConfig {
+                    chain_id: network_id,
+                },
                 base_fee_per_gas: None,
             },
             sync_state_config: None,
@@ -55,7 +57,7 @@ impl CreateVNetRequest {
     /// Set a custom chain ID
     #[must_use]
     pub fn chain_id(mut self, chain_id: u64) -> Self {
-        self.virtual_network_config.chain_id = chain_id;
+        self.virtual_network_config.chain_config.chain_id = chain_id;
         self
     }
 
@@ -109,8 +111,8 @@ pub struct ForkConfigResponse {
 /// Virtual network configuration for requests
 #[derive(Debug, Clone, Serialize)]
 pub struct VirtualNetworkConfig {
-    /// Chain ID for the virtual network
-    pub chain_id: u64,
+    /// Chain configuration (required by Tenderly API)
+    pub chain_config: ChainConfig,
 
     /// Base fee per gas (for EIP-1559)
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -300,20 +302,20 @@ impl ListVNetsQuery {
 #[derive(Debug, Clone, Serialize)]
 pub struct DeleteVNetsRequest {
     /// List of VNet IDs to delete
-    pub ids: Vec<String>,
+    pub vnet_ids: Vec<String>,
 }
 
 impl DeleteVNetsRequest {
     /// Create a delete request for a single VNet
     pub fn single(id: impl Into<String>) -> Self {
         Self {
-            ids: vec![id.into()],
+            vnet_ids: vec![id.into()],
         }
     }
 
     /// Create a delete request for multiple VNets
     pub fn multiple(ids: Vec<String>) -> Self {
-        Self { ids }
+        Self { vnet_ids: ids }
     }
 }
 

@@ -73,9 +73,7 @@ impl<'a> VNetsApi<'a> {
     /// Useful for CI/CD cleanup after test runs.
     pub async fn delete_many(&self, ids: Vec<String>) -> Result<()> {
         let request = DeleteVNetsRequest::multiple(ids);
-        self.client
-            .post_no_response("/vnets/delete", &request)
-            .await
+        self.client.delete_with_body("/vnets", &request).await
     }
 
     /// Fork a Virtual TestNet
@@ -212,7 +210,7 @@ mod tests {
         assert_eq!(request.display_name, "Test VNet");
         assert_eq!(request.fork_config.network_id, 1);
         assert_eq!(request.fork_config.block_number, Some(18_000_000));
-        assert_eq!(request.virtual_network_config.chain_id, 31_337);
+        assert_eq!(request.virtual_network_config.chain_config.chain_id, 31_337);
         assert!(request.sync_state_config.is_some());
     }
 
