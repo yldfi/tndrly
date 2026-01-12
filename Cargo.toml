@@ -18,7 +18,7 @@ path = "src/lib.rs"
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 
 # HTTP client
-reqwest = { version = "0.12", default-features = false, features = [
+reqwest = { version = "0.13", default-features = false, features = [
     "rustls-tls",
     "json",
 ] }
