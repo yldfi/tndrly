@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1](https://github.com/yldfi/tndrly/compare/v0.2.0...v0.2.1) (2026-01-12)
+
+
+### Bug Fixes
+
+* **api:** correct endpoint paths for alerts and actions APIs ([4bc14b3](https://github.com/yldfi/tndrly/commit/4bc14b3fc14ec7397c0aaab38d53136eb86c6f55))
+* **vnets:** use chain_config wrapper in CreateVNetRequest ([dddc5ab](https://github.com/yldfi/tndrly/commit/dddc5abd4a4330a864ca8bb76192d3deed2ea767))
+
 ## [0.2.2](https://github.com/yldfi/tndrly/compare/v0.2.1...v0.2.2) (2026-01-12)
 
 
