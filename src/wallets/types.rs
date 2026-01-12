@@ -28,6 +28,19 @@ impl AddWalletRequest {
         }
     }
 
+    /// Validate the request before sending
+    ///
+    /// Returns an error if:
+    /// - No networks have been specified (at least one is required)
+    pub fn validate(&self) -> Result<(), String> {
+        if self.network_ids.is_empty() {
+            return Err(
+                "At least one network_id is required. Use .network() to add networks.".to_string(),
+            );
+        }
+        Ok(())
+    }
+
     /// Add a network to monitor this wallet on
     #[must_use]
     pub fn network(mut self, network_id: impl Into<String>) -> Self {
@@ -51,7 +64,7 @@ impl AddWalletRequest {
 }
 
 /// Response from adding a wallet
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AddWalletResponse {
     /// Account ID
     #[serde(default)]
@@ -67,7 +80,7 @@ pub struct AddWalletResponse {
 }
 
 /// Wallet information on a specific network (wrapper returned by API)
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WalletOnNetwork {
     /// Wallet ID (e.g., "eth:1:0x...")
     pub id: String,
@@ -122,7 +135,7 @@ impl WalletOnNetwork {
 }
 
 /// Nested wallet account details from API
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WalletAccount {
     /// Account ID
     #[serde(default)]
@@ -161,7 +174,7 @@ pub struct WalletAccount {
 }
 
 /// Wallet tag
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WalletTag {
     /// Tag name
     pub tag: String,

@@ -34,8 +34,14 @@ pub enum Error {
     NotFound(String),
 
     /// Rate limit exceeded
-    #[error("Rate limit exceeded")]
-    RateLimited,
+    ///
+    /// The `retry_after` field contains the number of seconds to wait before retrying,
+    /// if the server provided a `Retry-After` header.
+    #[error("Rate limit exceeded{}", .retry_after.map(|s| format!(" (retry after {} seconds)", s)).unwrap_or_default())]
+    RateLimited {
+        /// Seconds to wait before retrying (from Retry-After header)
+        retry_after: Option<u64>,
+    },
 
     /// Invalid input parameters
     #[error("Invalid parameter: {0}")]
@@ -75,9 +81,22 @@ impl Error {
         Self::InvalidParam(message.into())
     }
 
+    /// Create a rate limited error with optional retry-after duration
+    pub fn rate_limited(retry_after: Option<u64>) -> Self {
+        Self::RateLimited { retry_after }
+    }
+
     /// Check if this is a rate limit error
     pub fn is_rate_limited(&self) -> bool {
-        matches!(self, Self::RateLimited)
+        matches!(self, Self::RateLimited { .. })
+    }
+
+    /// Get the retry-after duration if this is a rate limit error
+    pub fn retry_after(&self) -> Option<u64> {
+        match self {
+            Self::RateLimited { retry_after } => *retry_after,
+            _ => None,
+        }
     }
 
     /// Check if this is a not found error

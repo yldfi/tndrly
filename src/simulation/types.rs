@@ -190,11 +190,33 @@ impl SimulationRequest {
         self
     }
 
-    /// Enable saving the simulation
+    /// Set whether to save the simulation on success
+    ///
+    /// Note: This only controls saving on successful simulations.
+    /// Use `.save_if_fails(true)` to also save failed simulations.
     #[must_use]
     pub fn save(mut self, save: bool) -> Self {
         self.save = save;
-        self.save_if_fails = save;
+        self
+    }
+
+    /// Set whether to save the simulation even if it fails
+    ///
+    /// When `true`, failed simulations will be saved to your project.
+    /// This is useful for debugging transaction failures.
+    #[must_use]
+    pub fn save_if_fails(mut self, save_if_fails: bool) -> Self {
+        self.save_if_fails = save_if_fails;
+        self
+    }
+
+    /// Convenience method to save simulation regardless of success/failure
+    ///
+    /// Equivalent to calling `.save(true).save_if_fails(true)`.
+    #[must_use]
+    pub fn save_always(mut self) -> Self {
+        self.save = true;
+        self.save_if_fails = true;
         self
     }
 
@@ -339,7 +361,7 @@ pub struct BlockHeaderOverride {
 }
 
 /// Response from a simulation
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SimulationResponse {
     /// The simulation result
     pub simulation: Simulation,
@@ -354,7 +376,7 @@ pub struct SimulationResponse {
 }
 
 /// Simulation details
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Simulation {
     /// Simulation ID
     pub id: String,
@@ -417,7 +439,7 @@ pub struct Simulation {
 }
 
 /// Transaction information
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TransactionInfo {
     /// Transaction hash
     #[serde(default)]
@@ -510,7 +532,7 @@ impl BundleSimulationRequest {
 }
 
 /// Response from a bundle simulation
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BundleSimulationResponse {
     /// Results for each simulation in the bundle
     pub simulation_results: Vec<SimulationResponse>,
@@ -552,7 +574,7 @@ pub struct SimulationSummary {
 }
 
 /// Response for listing simulations
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SimulationListResponse {
     /// List of simulations
     pub simulations: Vec<SimulationSummary>,

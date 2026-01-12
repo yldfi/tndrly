@@ -242,7 +242,7 @@ impl VNetRpcs {
 }
 
 /// Response when creating a VNet
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateVNetResponse {
     /// The created VNet
     #[serde(flatten)]
@@ -359,7 +359,7 @@ impl ForkVNetRequest {
 }
 
 /// Transaction on a VNet
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VNetTransaction {
     /// Transaction hash
     pub hash: String,
@@ -394,7 +394,7 @@ pub struct VNetTransaction {
 }
 
 /// Response when listing VNet transactions
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ListVNetTransactionsResponse {
     /// List of transactions
     #[serde(default)]

@@ -71,7 +71,7 @@ impl std::str::FromStr for DeliveryChannelType {
 }
 
 /// Delivery channel details
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeliveryChannel {
     /// Channel ID
     pub id: String,
@@ -102,7 +102,7 @@ pub struct DeliveryChannel {
 }
 
 /// Response for listing delivery channels
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ListDeliveryChannelsResponse {
     /// List of delivery channels
     #[serde(default)]

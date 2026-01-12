@@ -74,9 +74,19 @@ impl Config {
     }
 
     /// Set a custom base URL (useful for testing)
+    ///
+    /// The URL will be normalized by removing trailing slashes.
+    ///
+    /// # Warning
+    ///
+    /// Using non-HTTPS URLs in production is not recommended as API keys
+    /// will be transmitted in plain text.
     #[must_use]
     pub fn with_base_url(mut self, url: impl Into<String>) -> Self {
-        self.base_url = Some(url.into());
+        let url = url.into();
+        // Normalize: remove trailing slashes to prevent double-slash issues
+        let normalized = url.trim_end_matches('/').to_string();
+        self.base_url = Some(normalized);
         self
     }
 
@@ -290,8 +300,32 @@ impl Client {
 
     /// Handle error responses
     async fn handle_error<T>(&self, status: u16, response: reqwest::Response) -> Result<T> {
+        // Extract rate limit headers before consuming the response
+        // Try standard Retry-After first, then Tenderly's X-Tdly-Reset-Timestamp
+        let retry_after = response
+            .headers()
+            .get("retry-after")
+            .and_then(|v| v.to_str().ok())
+            .and_then(|s| s.parse::<u64>().ok())
+            .or_else(|| {
+                // Tenderly uses X-Tdly-Reset-Timestamp (Unix timestamp)
+                // Convert to seconds from now
+                response
+                    .headers()
+                    .get("x-tdly-reset-timestamp")
+                    .and_then(|v| v.to_str().ok())
+                    .and_then(|s| s.parse::<u64>().ok())
+                    .and_then(|ts| {
+                        let now = std::time::SystemTime::now()
+                            .duration_since(std::time::UNIX_EPOCH)
+                            .ok()?
+                            .as_secs();
+                        ts.checked_sub(now)
+                    })
+            });
+
         if status == 429 {
-            return Err(Error::RateLimited);
+            return Err(Error::rate_limited(retry_after));
         }
 
         let message = response
@@ -299,11 +333,13 @@ impl Client {
             .await
             .unwrap_or_else(|_| "Unknown error".to_string());
 
-        if status == 404 {
-            return Err(Error::not_found(message));
+        match status {
+            404 => Err(Error::not_found(message)),
+            401 | 403 => Err(Error::auth(message)),
+            400 | 422 => Err(Error::invalid_param(message)),
+            402 => Err(Error::api(status, format!("Request failed: {}", message))),
+            _ => Err(Error::api(status, message)),
         }
-
-        Err(Error::api(status, message))
     }
 
     /// Get raw JSON response (for debugging or custom handling)

@@ -341,7 +341,7 @@ impl<'de> Deserialize<'de> for ActionSecret {
 }
 
 /// Web3 Action details
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Action {
     /// Action ID
     pub id: String,
@@ -380,7 +380,7 @@ pub struct Action {
 }
 
 /// Response when listing actions
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ListActionsResponse {
     /// List of actions (handles null as empty)
     #[serde(default, deserialize_with = "deserialize_null_default")]
@@ -398,7 +398,7 @@ where
 }
 
 /// Action execution log entry
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ActionLog {
     /// Log ID
     pub id: String,
@@ -479,7 +479,7 @@ impl std::str::FromStr for ActionLogStatus {
 }
 
 /// Response when listing action logs
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ListActionLogsResponse {
     /// List of execution logs
     #[serde(default)]
@@ -509,7 +509,7 @@ impl InvokeActionRequest {
 }
 
 /// Response from invoking an action
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct InvokeActionResponse {
     /// Execution ID
     pub execution_id: String,
@@ -563,7 +563,7 @@ impl ActionCallsQuery {
 }
 
 /// Action call/execution details
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ActionCall {
     /// Execution ID
     pub id: String,
@@ -606,7 +606,7 @@ pub struct ActionCall {
 }
 
 /// Response for action calls list
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ActionCallsResponse {
     /// List of executions
     #[serde(default)]

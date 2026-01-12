@@ -55,7 +55,7 @@ impl AddContractRequest {
 }
 
 /// Contract in project (wrapper returned by API)
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Contract {
     /// Project contract ID (e.g., "eth:1:0x...")
     pub id: String,
@@ -118,7 +118,7 @@ impl Contract {
 }
 
 /// Nested contract details from API
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ContractDetails {
     /// Contract ID
     #[serde(default)]
@@ -177,7 +177,7 @@ pub struct ContractDetails {
 }
 
 /// Token data for ERC20/ERC721 contracts
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TokenData {
     /// Token symbol
     #[serde(default)]
@@ -332,7 +332,7 @@ pub struct OptimizationSettings {
 }
 
 /// Verification result
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VerificationResult {
     /// Whether verification succeeded
     pub success: bool,
@@ -425,7 +425,7 @@ impl Default for StateOverrideInput {
 }
 
 /// Response from encoding state
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EncodeStateResponse {
     /// Encoded state overrides ready for use in simulations
     pub encoded_state: serde_json::Value,
@@ -515,7 +515,7 @@ pub struct BulkTagRequest {
 }
 
 /// Response from bulk tag operation
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BulkTagResponse {
     /// Tag that was applied
     #[serde(default)]
@@ -523,7 +523,7 @@ pub struct BulkTagResponse {
 }
 
 /// Tag information
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TagInfo {
     /// Tag name
     pub tag: String,

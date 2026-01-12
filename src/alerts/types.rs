@@ -349,7 +349,7 @@ impl AlertParameters {
 }
 
 /// Alert details
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Alert {
     /// Alert ID
     pub id: String,
@@ -388,7 +388,7 @@ pub struct Alert {
 }
 
 /// Alert destination
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertDestination {
     /// Destination ID
     pub id: String,
@@ -406,7 +406,7 @@ pub struct AlertDestination {
 }
 
 /// Response when listing alerts
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ListAlertsResponse {
     /// List of alerts
     #[serde(default)]
@@ -446,7 +446,7 @@ impl CreateWebhookRequest {
 }
 
 /// Webhook destination details
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Webhook {
     /// Webhook ID
     pub id: String,
@@ -471,7 +471,7 @@ pub struct Webhook {
 }
 
 /// Response when listing webhooks
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ListWebhooksResponse {
     /// List of webhooks
     #[serde(default)]
@@ -556,7 +556,7 @@ impl AlertHistoryQuery {
 }
 
 /// Alert execution history entry
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertHistoryEntry {
     /// Entry ID
     pub id: String,
@@ -590,7 +590,7 @@ pub struct AlertHistoryEntry {
 }
 
 /// Response for alert history
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AlertHistoryResponse {
     /// Alert history entries
     #[serde(default)]

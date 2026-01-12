@@ -1,9 +1,9 @@
 //! Types for Networks API
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// Network slugs for different Tenderly services
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct NetworkSlugs {
     /// Slug for the block explorer
     #[serde(default)]
@@ -19,7 +19,7 @@ pub struct NetworkSlugs {
 }
 
 /// Supported features for a network
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct SupportedFeatures {
     /// Whether Virtual TestNets are supported
     #[serde(default)]
@@ -43,7 +43,7 @@ pub struct SupportedFeatures {
 }
 
 /// Supported network information
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Network {
     /// Network name (e.g., "Mainnet", "Arbitrum One")
     pub network_name: String,

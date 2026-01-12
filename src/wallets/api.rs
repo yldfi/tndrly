@@ -48,6 +48,11 @@ impl<'a> WalletsApi<'a> {
     /// Adds a wallet address to your Tenderly project for monitoring across
     /// the specified networks.
     ///
+    /// # Errors
+    ///
+    /// Returns an error if no networks have been specified. Use `.network()` to add
+    /// at least one network to monitor the wallet on.
+    ///
     /// # Example
     ///
     /// ```ignore
@@ -59,6 +64,11 @@ impl<'a> WalletsApi<'a> {
     /// let response = client.wallets().add(&request).await?;
     /// ```
     pub async fn add(&self, request: &AddWalletRequest) -> Result<AddWalletResponse> {
+        // Validate that at least one network is specified
+        request
+            .validate()
+            .map_err(crate::error::Error::invalid_param)?;
+
         self.client.post("/wallet", request).await
     }
 
