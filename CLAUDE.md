@@ -72,6 +72,14 @@ src/
 - `TENDERLY_ACCOUNT` - Account slug
 - `TENDERLY_PROJECT` - Project slug
 
+## Git Hooks
+
+Install pre-commit hooks to run fmt, clippy, and tests before each commit:
+
+```bash
+./.githooks/install.sh
+```
+
 ## Code Style
 
 - Use `#[must_use]` on all builder methods
