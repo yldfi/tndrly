@@ -52,10 +52,34 @@ impl<'a> SimulationApi<'a> {
         self.client.get_with_query("/simulations", &query).await
     }
 
-    /// Get a saved simulation by ID
+    /// Get a saved simulation by ID (basic details)
+    ///
+    /// Returns basic simulation data. For full details including
+    /// contracts, transaction traces, and generated access list,
+    /// use [`get_full`](Self::get_full) instead.
     pub async fn get(&self, id: &str) -> Result<SimulationResponse> {
         self.client
             .get(&format!("/simulations/{}", encode_path_segment(id)))
+            .await
+    }
+
+    /// Get full simulation details by ID
+    ///
+    /// Returns complete simulation data including:
+    /// - Full simulation details
+    /// - Transaction traces and call data
+    /// - Contracts involved
+    /// - Generated access list
+    ///
+    /// This uses POST as per the Tenderly API specification and returns
+    /// significantly more data than [`get`](Self::get).
+    pub async fn get_full(&self, id: &str) -> Result<SimulationResponse> {
+        let empty: serde_json::Value = serde_json::json!({});
+        self.client
+            .post(
+                &format!("/simulations/{}", encode_path_segment(id)),
+                &empty,
+            )
             .await
     }
 
