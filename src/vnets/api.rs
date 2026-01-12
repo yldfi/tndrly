@@ -222,4 +222,29 @@ mod tests {
         assert_eq!(query.page, Some(2));
         assert_eq!(query.per_page, Some(50));
     }
+
+    #[test]
+    fn test_create_vnet_request_serialization() {
+        // This test ensures the JSON structure matches what the Tenderly API expects
+        let request = CreateVNetRequest::new("test-vnet", "Test VNet", 1).chain_id(31_337);
+
+        let json = serde_json::to_value(&request).unwrap();
+
+        // chain_id must be nested inside chain_config, not at virtual_network_config level
+        assert!(
+            json["virtual_network_config"]["chain_config"]["chain_id"].is_number(),
+            "chain_id must be nested in chain_config: {}",
+            serde_json::to_string_pretty(&json).unwrap()
+        );
+        assert_eq!(
+            json["virtual_network_config"]["chain_config"]["chain_id"],
+            31_337
+        );
+
+        // Ensure chain_id is NOT at the wrong level
+        assert!(
+            json["virtual_network_config"]["chain_id"].is_null(),
+            "chain_id should not be directly in virtual_network_config"
+        );
+    }
 }
