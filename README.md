@@ -23,7 +23,7 @@
 
 ```toml
 [dependencies]
-tndrly = "0.1"
+tndrly = "0.3"
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -109,23 +109,23 @@ client.vnets().delete_many(vec!["id1".into(), "id2".into()]).await?;
 
 ### Alerts
 
+> **Note:** The Tenderly Alerts API uses an undocumented request format. Alert creation
+> (`create()`) may not work as expected. Read operations (`list()`, `get()`, `history()`)
+> work correctly. See [src/alerts/types.rs](src/alerts/types.rs) for details.
+
 ```rust
-use tndrly::alerts::{CreateAlertRequest, AlertType, AlertTarget, AddDestinationRequest};
+use tndrly::alerts::AlertHistoryQuery;
 
-// Create an alert
-let alert = client.alerts()
-    .create(&CreateAlertRequest::new(
-        "Failed Transactions",
-        AlertType::FailedTransaction,
-        "1",
-        AlertTarget::Address,
-    ).address("0xMyContract"))
+// List existing alerts
+let alerts = client.alerts().list().await?;
+
+// Get alert history
+let history = client.alerts()
+    .history(Some(AlertHistoryQuery::new().page(1).per_page(50)))
     .await?;
 
-// Add webhook destination
-client.alerts()
-    .add_destination(&alert.id, &AddDestinationRequest::webhook("webhook-id"))
-    .await?;
+// Get a specific alert
+let alert = client.alerts().get("alert-id").await?;
 ```
 
 ### Contracts

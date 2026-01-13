@@ -62,8 +62,11 @@ tests/
 └── admin_rpc_integration.rs  # Admin RPC integration tests (requires credentials)
 
 examples/
-├── test_admin_rpc.rs   # Comprehensive Admin RPC test
-├── integration_test.rs # Full API integration test
+├── test_admin_rpc.rs        # Comprehensive Admin RPC test
+├── test_all_endpoints.rs    # Test all API endpoints (read operations)
+├── test_write_operations.rs # Test write operations (creates/updates/deletes)
+├── test_vnet_transactions.rs # VNet transaction listing tests
+├── integration_test.rs      # Full API integration test
 └── ...
 ```
 
